@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  /* Color system — "Nice Aquarium House" */
+  --color-ink: #0A2A33;        /* deep water navy — text, headers */
+  --color-ink-soft: #12414D;
+  --color-lagoon: #157A78;     /* primary teal */
+  --color-lagoon-dark: #0E5C5B;
+  --color-lagoon-light: #4FB8AF;
+  --color-reef: #4C9A5F;       /* fresh green accent */
+  --color-sand: #E2A24B;       /* warm accent — driftwood/food, used sparingly */
+  --color-sand-dark: #C9822C;
+  --color-foam: #F5FAF9;       /* page background */
+  --color-mist: #E7EFEE;       /* card/section background */
+  --color-coral: #D96A5A;      /* sale/alert accent */
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Manrope", "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-foam);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-lagoon-light);
+  color: white;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Waterline ripple used behind the header on scroll + section dividers */
+@keyframes ripple {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ripple-strip {
+  animation: ripple 18s linear infinite;
+  width: 200%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple-strip { animation: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* Visible focus states for accessibility */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--color-lagoon);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom scrollbar for horizontal chip rows */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
