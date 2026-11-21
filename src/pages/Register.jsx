@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { AlertTriangle, Info } from '../utils/icons.jsx'
 
 export default function Register() {
   const { register, apiConfigured } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' })
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -16,7 +17,7 @@ export default function Register() {
     setSubmitting(true)
     try {
       await register(form)
-      navigate('/account')
+      navigate(location.state?.from || '/')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -56,7 +57,7 @@ export default function Register() {
       </form>
 
       <p className="text-sm text-ink/60 mt-5 text-center">
-        Already have an account? <Link to="/login" className="text-lagoon-dark font-medium">Sign in</Link>
+        Already have an account? <Link to="/login" state={{ from: location.state?.from }} className="text-lagoon-dark font-medium">Sign in</Link>
       </p>
     </div>
   )
