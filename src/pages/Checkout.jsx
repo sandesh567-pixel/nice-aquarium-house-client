@@ -7,7 +7,6 @@ import { submitOrder } from '../services/orderService'
 import { isApiConfigured } from '../services/api'
 import EmptyState from '../components/ui/EmptyState'
 
-const DELIVERY_CHARGE = 100
 const CITIES = ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Pokhara', 'Chitwan', 'Biratnagar', 'Butwal']
 const steps = ['Customer Info', 'Delivery Address', 'Delivery Method', 'Payment', 'Review']
 
@@ -61,9 +60,6 @@ export default function Checkout() {
       />
     )
   }
-
-  const delivery = form.deliveryMethod === 'express' ? DELIVERY_CHARGE * 2 : DELIVERY_CHARGE
-  const total = subtotal + delivery
 
   const canProceed = () => {
     if (step === 0) return form.fullName.trim() && form.phone.trim() && form.email.trim()
@@ -147,18 +143,15 @@ export default function Checkout() {
           {step === 2 && (
             <div className="space-y-3">
               {[
-                { id: 'standard', label: 'Standard Delivery', desc: '2–4 business days', price: DELIVERY_CHARGE },
-                { id: 'express', label: 'Express Delivery', desc: 'Next business day, where available', price: DELIVERY_CHARGE * 2 },
+                { id: 'standard', label: 'Standard Delivery', desc: '2–4 business days' },
+                { id: 'express', label: 'Express Delivery', desc: 'Next business day, where available' },
               ].map((opt) => (
-                <label key={opt.id} className={`flex items-center justify-between rounded-xl border p-4 cursor-pointer ${form.deliveryMethod === opt.id ? 'border-lagoon bg-lagoon/5' : 'border-mist'}`}>
-                  <div className="flex items-center gap-3">
-                    <input type="radio" name="delivery" checked={form.deliveryMethod === opt.id} onChange={() => update({ deliveryMethod: opt.id })} />
-                    <div>
-                      <p className="font-medium text-ink text-sm">{opt.label}</p>
-                      <p className="text-xs text-ink/50">{opt.desc}</p>
-                    </div>
+                <label key={opt.id} className={`flex items-center gap-3 rounded-xl border p-4 cursor-pointer ${form.deliveryMethod === opt.id ? 'border-lagoon bg-lagoon/5' : 'border-mist'}`}>
+                  <input type="radio" name="delivery" checked={form.deliveryMethod === opt.id} onChange={() => update({ deliveryMethod: opt.id })} />
+                  <div>
+                    <p className="font-medium text-ink text-sm">{opt.label}</p>
+                    <p className="text-xs text-ink/50">{opt.desc}</p>
                   </div>
-                  <span className="font-mono text-sm text-ink">Rs. {opt.price}</span>
                 </label>
               ))}
             </div>
@@ -195,7 +188,7 @@ export default function Checkout() {
               </div>
               <div>
                 <h3 className="font-medium text-ink mb-1">Delivery</h3>
-                <p className="text-ink/60">{form.deliveryMethod === 'express' ? 'Express Delivery' : 'Standard Delivery'} · Rs. {delivery}</p>
+                <p className="text-ink/60">{form.deliveryMethod === 'express' ? 'Express Delivery' : 'Standard Delivery'}</p>
               </div>
               <div>
                 <h3 className="font-medium text-ink mb-1">Payment</h3>
@@ -253,17 +246,9 @@ export default function Checkout() {
             ))}
           </ul>
           <div className="space-y-1.5 text-sm border-t border-mist pt-3">
-            <div className="flex justify-between text-ink/60">
-              <span>Subtotal</span>
-              <span className="font-mono">Rs. {subtotal.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-ink/60">
-              <span>Delivery</span>
-              <span className="font-mono">Rs. {delivery}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-ink pt-2 border-t border-mist">
+            <div className="flex justify-between font-semibold text-ink">
               <span>Total</span>
-              <span className="font-mono">Rs. {total.toLocaleString()}</span>
+              <span className="font-mono">Rs. {subtotal.toLocaleString()}</span>
             </div>
           </div>
         </aside>
