@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, ChevronRight, AlertTriangle } from '../utils/icons.jsx'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 import { submitOrder } from '../services/orderService'
 import { isApiConfigured } from '../services/api'
 import EmptyState from '../components/ui/EmptyState'
@@ -12,6 +13,7 @@ const steps = ['Customer Info', 'Delivery Address', 'Delivery Method', 'Payment'
 
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [placing, setPlacing] = useState(false)
@@ -23,7 +25,30 @@ export default function Checkout() {
     paymentMethod: 'cod',
   })
 
+  // Require login before checking out when backend is connected
+  useEffect(() => {
+    if (isApiConfigured() && !authLoading && !isAuthenticated) {
+      navigate('/login', { state: { from: '/checkout' }, replace: true })
+    }
+  }, [authLoading, isAuthenticated, navigate])
+
+  // Pre-fill customer details from signed-in account
+  useEffect(() => {
+    if (user) {
+      setForm((f) => ({
+        ...f,
+        fullName: f.fullName || user.name || '',
+        phone: f.phone || user.phone || '',
+        email: f.email || user.email || '',
+      }))
+    }
+  }, [user])
+
   const update = (patch) => setForm((f) => ({ ...f, ...patch }))
+
+  if (isApiConfigured() && (authLoading || !isAuthenticated)) {
+    return null
+  }
 
   if (items.length === 0 && !placing) {
     return (
@@ -170,83 +195,29 @@ export default function Checkout() {
               </div>
               <div>
                 <h3 className="font-medium text-ink mb-1">Delivery</h3>
-                <p className="text-ink/60">{form.deliveryMethod === 'express' ? 'Express Delivery' : 'Standard Delivery'}</p>
+                <p className="text-ink/60">{form.deliveryMethod === 'express' ? 'Express Delivery' : 'Standard Delivery'} · Rs. {delivery}</p>
               </div>
               <div>
                 <h3 className="font-medium text-ink mb-1">Payment</h3>
                 <p className="text-ink/60">{form.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</p>
               </div>
+
+              {placeError && (
+                <p className="flex items-center gap-2 text-sm text-coral"><AlertTriangle size={15} /> {placeError}</p>
+              )}
             </div>
           )}
 
-          {placeError && (
-            <p className="flex items-center gap-2 text-sm text-coral mt-4">
-              <AlertTriangle size={15} className="shrink-0" /> {placeError}
-            </p>
-          )}
+          <div className="flex items-center justify-between mt-6 pt-5 border-t border-mist">
+            {step > 0 ? (
+              <button
+                type="button"
+                onClick={() => setStep((s) => s - 1)}
+                className="h-11 px-5 rounded-full border border-mist text-sm font-medium text-ink hover:bg-mist"
+              >
+                Back
+              </button>
+            ) : <span />}
 
-          <div className="flex justify-between mt-8">
-            <button
-              type="button"
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
-              disabled={step === 0}
-              className="h-11 px-5 rounded-full text-sm font-medium text-ink/60 disabled:opacity-0"
-            >
-              Back
-            </button>
             {step < steps.length - 1 ? (
               <button
-                type="button"
-                disabled={!canProceed()}
-                onClick={() => setStep((s) => s + 1)}
-                className="h-11 px-6 rounded-full bg-lagoon text-white font-medium disabled:bg-mist disabled:text-ink/40"
-              >
-                Continue
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={placeOrder}
-                disabled={placing}
-                className="h-11 px-6 rounded-full bg-lagoon text-white font-medium disabled:opacity-60"
-              >
-                {placing ? 'Placing Order...' : 'Place Order'}
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-mist bg-white p-5 h-fit sticky top-24">
-          <h2 className="font-display text-lg text-ink mb-4">Order Summary</h2>
-          <ul className="space-y-2 text-sm text-ink/70 mb-3 max-h-48 overflow-y-auto">
-            {items.map((i) => (
-              <li key={i.id} className="flex justify-between">
-                <span className="line-clamp-1 pr-2">{i.name} × {i.qty}</span>
-                <span className="font-mono shrink-0">Rs. {(i.price * i.qty).toLocaleString('en-IN')}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="space-y-2 text-sm border-t border-mist pt-3">
-            <div className="flex justify-between text-ink/70"><span>Subtotal</span><span className="font-mono">Rs. {subtotal.toLocaleString('en-IN')}</span></div>
-            <div className="flex justify-between text-ink/70"><span>Delivery</span><span className="font-mono">Rs. {delivery.toLocaleString('en-IN')}</span></div>
-            <div className="flex justify-between font-semibold text-ink pt-2 border-t border-mist"><span>Total</span><span className="font-mono">Rs. {total.toLocaleString('en-IN')}</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Field({ label, value, onChange, type = 'text', required, textarea }) {
-  const id = `field-${label.toLowerCase().replace(/\s+/g, '-')}`
-  return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-ink mb-1">{label}{required && <span className="text-coral"> *</span>}</label>
-      {textarea ? (
-        <textarea id={id} value={value} onChange={(e) => onChange(e.target.value)} rows={3} className="w-full rounded-lg border border-mist px-3 py-2 text-sm" />
-      ) : (
-        <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required} className="w-full h-11 rounded-lg border border-mist px-3 text-sm" />
-      )}
-    </div>
-  )
-}
