@@ -222,3 +222,148 @@ export default function Header() {
       {/* Mobile search overlay */}
       {searchOpen && (
         <div className="md:hidden border-t border-mist bg-white p-3">
+          <form onSubmit={submitSearch} className="flex items-center gap-2">
+            <label htmlFor="mobile-search" className="sr-only">Search products</label>
+            <input
+              id="mobile-search"
+              type="search"
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search fish, plants, gear..."
+              className="flex-1 h-11 rounded-full border border-mist bg-mist/60 px-4 text-sm text-ink placeholder:text-ink/40 focus:bg-white"
+            />
+            <button
+              type="button"
+              onClick={() => setSearchOpen(false)}
+              className="h-11 w-11 flex items-center justify-center text-ink"
+              aria-label="Close search"
+            >
+              <X size={22} />
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Mobile drawer */}
+      {menuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-ink/50" onClick={() => setMenuOpen(false)} />
+          <aside className="absolute left-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-xl overflow-y-auto">
+            <div className="flex items-center justify-between px-4 h-16 border-b border-mist">
+              <span className="font-display text-lg text-ink">Menu</span>
+              <button
+                className="h-11 w-11 -mr-2 flex items-center justify-center text-ink"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-6">
+              {/* Account section */}
+              <div>
+                {isAuthenticated ? (
+                  <div className="space-y-1">
+                    <div className="px-3 py-2 mb-1">
+                      <p className="text-sm font-medium text-ink truncate">{user?.name || 'Account'}</p>
+                      <p className="text-xs text-ink/50 truncate">{user?.email}</p>
+                    </div>
+                    {user?.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-lagoon-dark bg-lagoon/10"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <Link
+                      to="/account"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-3 py-2.5 rounded-xl text-sm text-ink/80 hover:bg-mist"
+                    >
+                      My Account
+                    </Link>
+                    <Link
+                      to="/account/orders"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-3 py-2.5 rounded-xl text-sm text-ink/80 hover:bg-mist"
+                    >
+                      My Orders
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-coral hover:bg-coral/10"
+                    >
+                      Log Out
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setMenuOpen(false)}
+                      className="h-11 flex items-center justify-center rounded-full bg-lagoon text-white text-sm font-medium"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setMenuOpen(false)}
+                      className="h-11 flex items-center justify-center rounded-full border border-mist text-ink text-sm font-medium"
+                    >
+                      Create Account
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Shop links */}
+              <nav aria-label="Mobile primary" className="space-y-1">
+                {primaryLinks.map((link) => (
+                  <Link
+                    key={link.label}
+                    to={link.to}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-3 py-2.5 rounded-xl text-base font-medium text-ink hover:bg-mist"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <Link
+                  to="/wishlist"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-3 py-2.5 rounded-xl text-base font-medium text-ink hover:bg-mist"
+                >
+                  Wishlist{ids.length > 0 ? ` (${ids.length})` : ''}
+                </Link>
+              </nav>
+
+              {/* More categories */}
+              {categories.length > 6 && (
+                <div>
+                  <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-wide text-ink/40">More categories</p>
+                  <div className="space-y-1">
+                    {categories.slice(6).map((c) => (
+                      <Link
+                        key={c.slug}
+                        to={`/shop?category=${c.slug}`}
+                        onClick={() => setMenuOpen(false)}
+                        className="block px-3 py-2 rounded-xl text-sm text-ink/70 hover:bg-mist hover:text-ink"
+                      >
+                        {c.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+    </header>
+  )
+}
