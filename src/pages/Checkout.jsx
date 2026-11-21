@@ -221,3 +221,73 @@ export default function Checkout() {
 
             {step < steps.length - 1 ? (
               <button
+                type="button"
+                onClick={() => setStep((s) => s + 1)}
+                disabled={!canProceed()}
+                className="h-11 px-6 rounded-full bg-lagoon text-white text-sm font-medium hover:bg-lagoon-dark disabled:bg-mist disabled:text-ink/40 transition-colors"
+              >
+                Continue
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={placeOrder}
+                disabled={placing}
+                className="h-11 px-6 rounded-full bg-lagoon text-white text-sm font-medium hover:bg-lagoon-dark disabled:bg-mist disabled:text-ink/40 transition-colors"
+              >
+                {placing ? 'Placing order...' : 'Place Order'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Order summary */}
+        <aside className="rounded-2xl border border-mist bg-white p-5 h-fit">
+          <h2 className="font-display text-lg text-ink mb-4">Order Summary</h2>
+          <ul className="space-y-2 text-sm mb-4">
+            {items.map((item) => (
+              <li key={item.id} className="flex items-start justify-between gap-3">
+                <span className="text-ink/70">{item.name} × {item.qty}</span>
+                <span className="font-mono text-ink shrink-0">Rs. {(item.price * item.qty).toLocaleString()}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="space-y-1.5 text-sm border-t border-mist pt-3">
+            <div className="flex justify-between text-ink/60">
+              <span>Subtotal</span>
+              <span className="font-mono">Rs. {subtotal.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-ink/60">
+              <span>Delivery</span>
+              <span className="font-mono">Rs. {delivery}</span>
+            </div>
+            <div className="flex justify-between font-semibold text-ink pt-2 border-t border-mist">
+              <span>Total</span>
+              <span className="font-mono">Rs. {total.toLocaleString()}</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, value, onChange, type = 'text', required, textarea }) {
+  const id = `checkout-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+  const common = {
+    id,
+    value,
+    onChange: (e) => onChange(e.target.value),
+    required,
+  }
+  return (
+    <div>
+      <label htmlFor={id} className="block text-sm font-medium text-ink mb-1">{label}</label>
+      {textarea ? (
+        <textarea {...common} rows={3} className="w-full rounded-lg border border-mist px-3 py-2 text-sm" />
+      ) : (
+        <input {...common} type={type} className="w-full h-11 rounded-lg border border-mist px-3 text-sm" />
+      )}
+    </div>
+  )
+}
