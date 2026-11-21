@@ -1,3 +1,10 @@
+
+---
+
+### File 2: `src/pages/Login.jsx`
+*(Replace the entire contents of `src/pages/Login.jsx` with this)*
+
+```jsx
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -16,8 +23,14 @@ export default function Login() {
     setError('')
     setSubmitting(true)
     try {
-      await login(form)
-      navigate(location.state?.from || '/account')
+      const loggedInUser = await login(form)
+      if (location.state?.from) {
+        navigate(location.state.from)
+      } else if (loggedInUser?.role === 'admin') {
+        navigate('/admin')
+      } else {
+        navigate('/')
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -55,7 +68,7 @@ export default function Login() {
       </form>
 
       <p className="text-sm text-ink/60 mt-5 text-center">
-        New here? <Link to="/register" className="text-lagoon-dark font-medium">Create an account</Link>
+        New here? <Link to="/register" state={{ from: location.state?.from }} className="text-lagoon-dark font-medium">Create an account</Link>
       </p>
     </div>
   )
