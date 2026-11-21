@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Menu, X, Search, Heart, ShoppingCart, User, ChevronDown, Fish } from '../../utils/icons.jsx'
 import { useCategories } from '../../context/CategoryContext'
 import { useCart } from '../../context/CartContext'
 import { useWishlist } from '../../context/WishlistContext'
+import { useAuth } from '../../context/AuthContext'
 
 const primaryLinks = [
   { label: 'Fish', to: '/shop?category=freshwater-fish' },
@@ -18,15 +19,28 @@ export default function Header() {
   const { categories } = useCategories()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const { count } = useCart()
   const { ids } = useWishlist()
+  const { user, isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
+  const userMenuRef = useRef(null)
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [menuOpen])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const submitSearch = (e) => {
     e.preventDefault()
@@ -35,6 +49,13 @@ export default function Header() {
       setSearchOpen(false)
       setMenuOpen(false)
     }
+  }
+
+  const handleLogout = () => {
+    logout()
+    setUserMenuOpen(false)
+    setMenuOpen(false)
+    navigate('/')
   }
 
   return (
@@ -105,9 +126,83 @@ export default function Header() {
             <button className="md:hidden h-11 w-11 flex items-center justify-center text-ink" onClick={() => setSearchOpen(true)} aria-label="Search">
               <Search size={22} />
             </button>
-            <Link to="/account" className="hidden sm:flex h-11 w-11 items-center justify-center text-ink" aria-label="Account">
-              <User size={22} />
-            </Link>
+
+            {/* User / Admin dropdown (visible on both mobile and desktop) */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((o) => !o)}
+                className="relative flex h-11 w-11 items-center justify-center text-ink rounded-full hover:bg-mist transition-colors"
+                aria-label="Account menu"
+                aria-expanded={userMenuOpen}
+              >
+                <User size={22} />
+                {isAuthenticated && (
+                  <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-reef" />
+                )}
+              </button>
+
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-mist bg-white shadow-lg p-2 z-50">
+                  {isAuthenticated ? (
+                    <>
+                      <div className="px-3 py-2 border-b border-mist mb-1">
+                        <p className="text-sm font-medium text-ink truncate">{user?.name || 'Account'}</p>
+                        <p className="text-xs text-ink/50 truncate">{user?.email}</p>
+                      </div>
+                      {user?.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-3 py-2 rounded-xl text-sm font-semibold text-lagoon-dark bg-lagoon/10 hover:bg-lagoon/20 mb-1"
+                        >
+                          Admin Dashboard
+                        </Link>
+                      )}
+                      <Link
+                        to="/account"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 rounded-xl text-sm text-ink/80 hover:bg-mist hover:text-ink"
+                      >
+                        My Account
+                      </Link>
+                      <Link
+                        to="/account/orders"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 rounded-xl text-sm text-ink/80 hover:bg-mist hover:text-ink"
+                      >
+                        My Orders
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full text-left px-3 py-2 rounded-xl text-sm text-coral hover:bg-coral/10 mt-1"
+                      >
+                        Log Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2.5 rounded-xl text-sm font-medium text-white bg-lagoon hover:bg-lagoon-dark text-center mb-1"
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        to="/register"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 rounded-xl text-sm text-ink/80 hover:bg-mist hover:text-ink text-center"
+                      >
+                        Create Account
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
             <Link to="/wishlist" className="relative hidden sm:flex h-11 w-11 items-center justify-center text-ink" aria-label={`Wishlist, ${ids.length} items`}>
               <Heart size={22} />
               {ids.length > 0 && (
@@ -127,58 +222,3 @@ export default function Header() {
       {/* Mobile search overlay */}
       {searchOpen && (
         <div className="md:hidden border-t border-mist bg-white p-3">
-          <form onSubmit={submitSearch} className="flex gap-2">
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" />
-              <input
-                autoFocus
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search fish, plants, gear..."
-                className="w-full h-11 rounded-full border border-mist bg-mist/60 pl-9 pr-3 text-sm"
-              />
-            </div>
-            <button type="button" onClick={() => setSearchOpen(false)} className="h-11 w-11 flex items-center justify-center text-ink/60" aria-label="Close search">
-              <X size={20} />
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Mobile menu drawer */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-ink/40" onClick={() => setMenuOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-[85%] max-w-sm bg-white overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-mist">
-              <span className="font-display text-lg text-ink">Menu</span>
-              <button onClick={() => setMenuOpen(false)} className="h-11 w-11 flex items-center justify-center text-ink" aria-label="Close menu">
-                <X size={22} />
-              </button>
-            </div>
-            <nav className="p-4 space-y-1" aria-label="Mobile">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink/40 px-2 pt-2 pb-1">Shop</p>
-              {categories.map((c) => (
-                <Link
-                  key={c.slug}
-                  to={`/shop?category=${c.slug}`}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-3 rounded-xl text-ink hover:bg-mist"
-                >
-                  {c.name}
-                </Link>
-              ))}
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink/40 px-2 pt-4 pb-1">More</p>
-              <Link to="/guides" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-xl text-ink hover:bg-mist">Aquarium Guides</Link>
-              <Link to="/setup-wizard" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-xl text-ink hover:bg-mist">Build Your Aquarium</Link>
-              <Link to="/contact" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-xl text-ink hover:bg-mist">Contact</Link>
-              <Link to="/about" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-xl text-ink hover:bg-mist">About Us</Link>
-              <Link to="/account" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-xl text-ink hover:bg-mist">My Account</Link>
-            </nav>
-          </div>
-        </div>
-      )}
-    </header>
-  )
-}
