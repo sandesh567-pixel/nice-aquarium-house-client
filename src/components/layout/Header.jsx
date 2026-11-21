@@ -222,4 +222,3 @@ export default function Header() {
       {/* Mobile search overlay */}
       {searchOpen && (
         <div className="md:hidden border-t border-mist bg-white p-3">
-
