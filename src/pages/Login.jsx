@@ -1,10 +1,3 @@
-
----
-
-### File 2: `src/pages/Login.jsx`
-*(Replace the entire contents of `src/pages/Login.jsx` with this)*
-
-```jsx
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
